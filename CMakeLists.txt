@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
 
+if(BUILD_TSP)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTRIMUISP -mtune=cortex-a53 -mcpu=cortex-a53")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRIMUISP -mtune=cortex-a53 -mcpu=cortex-a53")
+endif()
+
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
@@ -11,7 +16,7 @@ option(ENABLE_OPROFILE "Enable OProfile" OFF)
 option(TEST_AUTOMATION "Enable test automation" OFF)
 option(ENABLE_LOG "Enable full logging" OFF)
 option(ASAN "Enable address sanitizer" OFF)
-option(USE_GLES "Use GLES[3] API" OFF)
+option(USE_GLES "Use GLES[3] API" ON)
 option(USE_GLES2 "Use GLES2 API" OFF)
 option(USE_HOST_LIBZIP "Use host libzip" ON)
 option(USE_OPENMP "Use OpenMP if available" ON)
@@ -233,7 +238,7 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
     endif()
 endif()
 
-if(UNIX AND NOT APPLE AND NOT ANDROID)
+if(BUILD_TSP)#if(UNIX AND NOT APPLE AND NOT ANDROID)
 	if(USE_GLES2)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES2)
 		target_link_libraries(${PROJECT_NAME} PRIVATE GLESv2)
@@ -598,10 +603,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/linux-dist/evdev.h
         core/linux-dist/icon.h
         core/linux-dist/joystick.cpp
-        core/linux-dist/joystick.h
-        core/linux-dist/x11.cpp
-        core/linux-dist/x11.h
-        core/linux-dist/x11_keyboard.h)
+        core/linux-dist/joystick.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/log/BitSet.h
@@ -737,7 +739,9 @@ if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
 endif()
 
 if(USE_VULKAN AND NOT APPLE)
-    if(ANDROID)
+    if(BUILD_TSP)
+        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_DISPLAY_KHR)
+    elseif(ANDROID)
         set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
     elseif(X11_FOUND)
         set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
